@@ -36,7 +36,7 @@ UsbRet usb_poll(uint8_t mode, size_t size)
     {
         uint8_t m;
         uint8_t p[0x7];
-        size_t size;
+        size_t sz;
     } poll = { mode, {0}, size };
 
     if (usb_failed(usb_write(&poll, USB_POLL_SIZE)))
@@ -84,11 +84,15 @@ UsbRet usb_open_file(const char *name)
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
-    if (usb_failed(usb_poll(UsbMode_OpenFile, size)))
-        return UsbReturnCode_PollError;
+    UsbRet ret;
 
-    if (usb_failed(usb_write(name, size)))
-        return UsbReturnCode_WrongSizeWritten;
+    ret = usb_poll(UsbMode_OpenFile, size);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(name, size);
+    if (usb_failed(ret))
+        return ret;
 
     return usb_get_result();
 }
@@ -102,11 +106,16 @@ UsbRet usb_touch_file(const char *name)
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
-    if (usb_failed(usb_poll(UsbMode_TouchFile, size)))
-        return UsbReturnCode_PollError;
+    UsbRet ret;
 
-    if (usb_failed(usb_write(name, size)))
-        return UsbReturnCode_WrongSizeWritten;
+    ret = usb_poll(UsbMode_TouchFile, size);
+
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(name, size);
+    if (usb_failed(ret))
+        return ret;
 
     return usb_get_result();
 }
@@ -122,8 +131,11 @@ UsbRet usb_rename_file(const char *curr_name, const char *new_name)
     if (str1_len >= USB_FILE_NAME_MAX || str2_len >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
-    if (usb_failed(usb_poll(UsbMode_RenameFile, str1_len + str2_len + 2 + 0x10)))
-        return UsbReturnCode_PollError;
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_RenameFile, str1_len + str2_len + 2 + 0x10);
+    if (usb_failed(ret))
+        return ret;
 
     const struct
     {
@@ -131,9 +143,13 @@ UsbRet usb_rename_file(const char *curr_name, const char *new_name)
         size_t l2;
         const char *str1;
         const char *str2;
-    } in = { str1_len, str2_len, curr_name, new_name };
+    } send = { str1_len, str2_len, curr_name, new_name };
 
-    return usb_write(&in, str1_len + str2_len + 2 + 0x10);
+    ret = usb_write(&send, str1_len + str2_len + 2 + 0x10);
+    if (usb_failed(ret))
+        return ret;
+    
+    return usb_get_result();
 }
 
 UsbRet usb_delete_file(const char *name)
@@ -141,12 +157,16 @@ UsbRet usb_delete_file(const char *name)
     if (name == NULL)
         return UsbReturnCode_EmptyField;
 
+    UsbRet ret;
     size_t size = strlen(name);
-    if (usb_failed(usb_poll(UsbMode_DeleteFile, size)))
-        return UsbReturnCode_PollError;
 
-    if (usb_failed(usb_write(name, size)))
-        return UsbReturnCode_WrongSizeWritten;
+    ret = usb_poll(UsbMode_DeleteFile, size);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(name, size);
+    if (usb_failed(ret))
+        return ret;
 
     return usb_get_result();
 }
@@ -156,17 +176,23 @@ UsbRet usb_read_file(void *out, size_t size, uint64_t offset)
     if (out == NULL)
         return UsbReturnCode_EmptyField;
 
-    if (usb_failed(usb_poll(UsbMode_ReadFile, size + 0x10)))
-        return UsbReturnCode_PollError;
+    UsbRet ret;
 
-    struct
+    ret = usb_poll(UsbMode_ReadFile, size);
+    if (usb_failed(ret))
+        return ret;
+
+    const struct
     {
-        void *d;
-        size_t s;
+        size_t sz;
         uint64_t off;
-    } in = { out, size, offset};
+    } send = {size, offset};
 
-    return usb_write(&in, size + 0x10);
+    ret = usb_write(&send, 0x10);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_read(out, size);
 }
 
 UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset)
@@ -174,17 +200,23 @@ UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset)
     if (in == NULL)
         return UsbReturnCode_EmptyField;
 
-    if (usb_failed(usb_poll(UsbMode_WriteFile, size + 0x10)))
-        return UsbReturnCode_PollError;
+    UsbRet ret;
 
-    struct
+    ret = usb_poll(UsbMode_WriteFile, size);
+    if (usb_failed(ret))
+        return ret;
+
+    const struct
     {
-        const void *d;
-        size_t s;
+        size_t sz;
         uint64_t off;
-    } s = { in, size, offset};
+    } send = { size, offset};
 
-    return usb_write(&s, size + 0x10);
+    ret = usb_write(&send, 0x10);
+    if (usb_failed(ret))
+        return ret;
+    
+    return usb_write(in, size);
 }
 
 void usb_close_file(void)
