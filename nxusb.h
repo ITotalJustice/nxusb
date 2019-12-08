@@ -174,6 +174,9 @@ UsbRet usb_read_file(void *out, size_t size, uint64_t offset);
 UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset);
 
 //
+UsbRet usb_get_file_size(const char *name, uint64_t *out);
+
+//
 void usb_close_file(void);
 
 #endif

@@ -102,7 +102,7 @@ UsbRet usb_touch_file(const char *name)
     if (name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(name);
+    size_t size = strlen(name) + 1;
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
@@ -125,15 +125,15 @@ UsbRet usb_rename_file(const char *curr_name, const char *new_name)
     if (curr_name == NULL || new_name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t str1_len = strlen(curr_name);
-    size_t str2_len = strlen(new_name);
+    size_t str1_len = strlen(curr_name) + 1;
+    size_t str2_len = strlen(new_name) + 1;
 
     if (str1_len >= USB_FILE_NAME_MAX || str2_len >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
     UsbRet ret;
 
-    ret = usb_poll(UsbMode_RenameFile, str1_len + str2_len + 2 + 0x10);
+    ret = usb_poll(UsbMode_RenameFile, str1_len + str2_len + 0x10);
     if (usb_failed(ret))
         return ret;
 
@@ -217,6 +217,28 @@ UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset)
         return ret;
     
     return usb_write(in, size);
+}
+
+UsbRet usb_get_file_size(const char *name, uint64_t *out)
+{
+    if (name == NULL)
+        return UsbReturnCode_EmptyField;
+
+    size_t size = strlen(name) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_GetFileSize, size);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(name, size);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_read(out, sizeof(uint64_t));
 }
 
 void usb_close_file(void)
