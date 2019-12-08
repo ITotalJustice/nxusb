@@ -71,6 +71,7 @@ void usb_exit(void)
 }
 
 
+
 /*
 *   File Functions.
 */
@@ -250,4 +251,91 @@ UsbRet usb_get_file_size(const char *name, uint64_t *out)
 void usb_close_file(void)
 {
     usb_poll(UsbMode_CloseFile, 0);
+}
+
+
+
+/*
+*   Dir Functions.
+*/
+
+UsbRet usb_open_dir(const char *path)
+{
+
+}
+
+UsbRet usb_delete_dir(const char *path)
+{
+
+}
+
+UsbRet usb_delete_dir_recursively(const char *path)
+{
+
+}
+
+UsbRet usb_rename_dir(const char *path)
+{
+
+}
+
+UsbRet usb_touch_dir(const char *path)
+{
+
+}
+
+UsbRet usb_get_dir_total_from_path(const char *path, uint64_t *out)
+{
+
+}
+
+UsbRet usb_get_dir_total(uint64_t *out)
+{
+
+}
+
+UsbRet usb_read_dir(usb_file_entry_t *out, size_t size)
+{
+
+}
+
+UsbRet usb_get_dir_size(size_t *out)
+{
+
+}
+
+UsbRet usb_get_dir_size_recursively(size_t *out)
+{
+
+}
+
+UsbRet usb_get_dir_size_from_path(const char *path, size_t *out)
+{
+
+}
+
+UsbRet usb_get_dir_size_recursively_from_path(const char *path, size_t *out)
+{
+
+}
+
+
+
+/*
+*   Device Functions.
+*/
+
+UsbRet usb_open_device(const char *name)
+{
+
+}
+
+UsbRet usb_get_device_total(uint64_t *out)
+{
+
+}
+
+UsbRet usb_read_device()
+{
+
 }
