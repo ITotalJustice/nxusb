@@ -5,7 +5,10 @@
 
 
 #define USB_POLL_SIZE       0x10
-#define USB_FILE_NAME_MAX   0x400
+#define USB_FILE_NAME_MAX   0x200
+
+typedef uint32_t UsbRet;    // return type
+
 
 typedef enum
 {
@@ -33,6 +36,27 @@ typedef enum
     UsbMode_ReadDevices = 0x41,
     UsbMode_GetTotalDevices = 0x42,
 } UsbMode;
+
+typedef enum
+{
+    UsbReturnCode_Success               = 0x0,
+
+    UsbReturnCode_PollError             = 0x1,
+    UsbReturnCode_WrongSizeRead         = 0x2,
+    UsbReturnCode_WrongSizeWritten      = 0x3,
+
+    UsbReturnCode_FileNameTooLarge      = 0x10,
+
+    UsbReturnCode_FailedOpenFile        = 0x20,
+    UsbReturnCode_FailedRenameFile      = 0x21,
+    UsbReturnCode_FailedDeleteFile      = 0x22,
+    UsbReturnCode_FailedRenameFile      = 0x22,
+    UsbReturnCode_FailedDeleteFile      = 0x24,
+
+    UsbReturnCode_FailedOpenDir         = 0x21,
+    UsbReturnCode_FailedRenameDir       = 0x23,
+    UsbReturnCode_FailedDeleteDir       = 0x25,
+} UsbReturnCode;
 
 typedef enum
 {
@@ -88,13 +112,6 @@ typedef enum
 
 typedef struct
 {
-    uint8_t mode;
-    size_t size;
-    uint8_t padding[0x7];
-} usb_poll_t;
-
-typedef struct
-{
     char name[USB_FILE_NAME_MAX];   // 1kb.
     uint8_t entry_type;             // see UsbFileEntryType.
     uint8_t ext_type;               // USBFileExtentionType.
@@ -105,17 +122,17 @@ typedef struct
 
 
 // read into void *out return size of data read.
-size_t usb_read(void *out, size_t size);
+UsbRet usb_read(void *out, size_t size);
 
 // write from void *in, return the size of the data written.
-size_t usb_write(const void *in, size_t size);
+UsbRet usb_write(const void *in, size_t size);
 
 // this gets called for every command.
 // it will write 0x10 bytes to usb.
 // this will tell the usb the mode to be in and how much data to receive / send (depending on mode).
 // size can be set to zero for modes that don't require a size, such as exit and closing a file.
 // the usb client should handle all of this.
-size_t usb_poll(uint8_t mode, size_t size);
+UsbRet usb_poll(uint8_t mode, size_t size);
 
 // call this to exit usb comms.
 void usb_exit(void);
