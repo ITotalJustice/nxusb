@@ -75,22 +75,28 @@ void usb_exit(void)
 *   File Functions.
 */
 
-UsbRet usb_open_file(const char *name)
+UsbRet usb_open_file(const char *name, uint8_t mode)
 {
     if (name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(name);
+    size_t size = strlen(name) + 1;
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
     UsbRet ret;
 
-    ret = usb_poll(UsbMode_OpenFile, size);
+    ret = usb_poll(UsbMode_OpenFile, size + 0x1);
     if (usb_failed(ret))
         return ret;
 
-    ret = usb_write(name, size);
+    const struct
+    {
+        uint8_t m;
+        const char *str;
+    } send = { mode, name };
+
+    ret = usb_write(&send, size + 0x1);
     if (usb_failed(ret))
         return ret;
 
