@@ -46,6 +46,7 @@ typedef enum
     UsbReturnCode_WrongSizeWritten      = 0x3,
 
     UsbReturnCode_FileNameTooLarge      = 0x10,
+    UsbReturnCode_EmptyField            = 0x11,
 
     UsbReturnCode_FailedOpenFile        = 0x20,
     UsbReturnCode_FailedRenameFile      = 0x21,
