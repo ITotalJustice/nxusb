@@ -4,7 +4,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 #include <switch/services/usb.h>
 
 #include "nxusb.h"
@@ -38,7 +37,7 @@ UsbRet usb_poll(uint8_t mode, size_t size)
         uint8_t p[0x7];
         size_t size;
     } poll = { mode, size, {0} };
-    
+
     if (usb_failed(usb_write(&poll, USB_POLL_SIZE)))
         return UsbReturnCode_PollError;
     return UsbReturnCode_Success;
@@ -82,7 +81,9 @@ UsbRet usb_open_file(const char *name)
 
     if (usb_failed(usb_poll(UsbMode_OpenFile, size)))
         return UsbReturnCode_PollError;
-    return usb_write(name, size);
+    if (usb_failed(usb_write(name, size)))
+        return UsbReturnCode_WrongSizeWritten;
+    return usb_get_result();
 }
 
 UsbRet usb_touch_file(const char *name)
@@ -92,7 +93,9 @@ UsbRet usb_touch_file(const char *name)
         return UsbReturnCode_FileNameTooLarge;
     if (usb_failed(usb_poll(UsbMode_TouchFile, size)))
         return UsbReturnCode_PollError;
-    return usb_write(name, size);
+    if (usb_failed(usb_write(name, size)))
+        return UsbReturnCode_WrongSizeWritten;
+    return usb_get_result();
 }
 
 UsbRet usb_delete_file(const char *name)
@@ -100,7 +103,9 @@ UsbRet usb_delete_file(const char *name)
     size_t size = strlen(name);
     if (usb_failed(usb_poll(UsbMode_DeleteFile, size)))
         return UsbReturnCode_PollError;
-    return usb_write(name, size);
+    if (usb_failed(usb_write(name, size)))
+        return UsbReturnCode_WrongSizeWritten;
+    return usb_get_result();
 }
 
 UsbRet usb_read_file(void *out, size_t size, uint64_t offset)
