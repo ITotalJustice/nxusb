@@ -91,13 +91,7 @@ UsbRet usb_open_file(const char *name, uint8_t mode)
     if (usb_failed(ret))
         return ret;
 
-    const struct
-    {
-        uint8_t m;
-        const char *str;
-    } send = { mode, name };
-
-    ret = usb_write(&send, size + 0x1);
+    ret = usb_write(name, size + 0x1);
     if (usb_failed(ret))
         return ret;
 
