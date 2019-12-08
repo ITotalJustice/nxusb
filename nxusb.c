@@ -4,7 +4,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <switch/services/usb.h>
+#include <string.h>
+#include <switch.h>
 
 #include "nxusb.h"
 
@@ -36,22 +37,18 @@ UsbRet usb_poll(uint8_t mode, size_t size)
         uint8_t m;
         uint8_t p[0x7];
         size_t size;
-    } poll = { mode, size, {0} };
+    } poll = { mode, {0}, size };
 
     if (usb_failed(usb_write(&poll, USB_POLL_SIZE)))
         return UsbReturnCode_PollError;
     return UsbReturnCode_Success;
 }
 
-void usb_exit(void)
-{
-    usb_poll(UsbMode_Exit, 0);
-}
-
 UsbRet usb_get_result(void)
 {
     UsbRet ret;
     usb_read(&ret, sizeof(UsbRet));
+    return ret;
 }
 
 bool usb_failed(UsbRet ret)
@@ -66,6 +63,11 @@ bool usb_succeeded(UsbRet ret)
     if (ret != UsbReturnCode_Success)
         return true;
     return false;
+}
+
+void usb_exit(void)
+{
+    usb_poll(UsbMode_Exit, 0);
 }
 
 
@@ -123,12 +125,12 @@ UsbRet usb_rename_file(const char *curr_name, const char *new_name)
     if (usb_failed(usb_poll(UsbMode_RenameFile, str1_len + str2_len + 2 + 0x10)))
         return UsbReturnCode_PollError;
 
-    struct
+    const struct
     {
         size_t l1;
         size_t l2;
-        char *str1;
-        char *str2;
+        const char *str1;
+        const char *str2;
     } in = { str1_len, str2_len, curr_name, new_name };
 
     return usb_write(&in, str1_len + str2_len + 2 + 0x10);
@@ -177,7 +179,7 @@ UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset)
 
     struct
     {
-        void *d;
+        const void *d;
         size_t s;
         uint64_t off;
     } s = { in, size, offset};

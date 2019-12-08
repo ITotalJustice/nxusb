@@ -53,3 +53,7 @@ dkms.conf
 
 # my ignores
 .vscode/
+build/
+*.elf
+*.nro
+*.nacp

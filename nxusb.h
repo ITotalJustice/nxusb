@@ -51,12 +51,10 @@ typedef enum
     UsbReturnCode_FailedOpenFile        = 0x20,
     UsbReturnCode_FailedRenameFile      = 0x21,
     UsbReturnCode_FailedDeleteFile      = 0x22,
-    UsbReturnCode_FailedRenameFile      = 0x22,
-    UsbReturnCode_FailedDeleteFile      = 0x24,
 
-    UsbReturnCode_FailedOpenDir         = 0x21,
-    UsbReturnCode_FailedRenameDir       = 0x23,
-    UsbReturnCode_FailedDeleteDir       = 0x25,
+    UsbReturnCode_FailedOpenDir         = 0x30,
+    UsbReturnCode_FailedRenameDir       = 0x31,
+    UsbReturnCode_FailedDeleteDir       = 0x32,
 } UsbReturnCode;
 
 typedef enum
@@ -122,6 +120,10 @@ typedef struct
 } usb_file_entry_t;
 
 
+/*
+*   Core Functions.
+*/
+
 // read into void *out return size of data read.
 UsbRet usb_read(void *out, size_t size);
 
@@ -135,7 +137,43 @@ UsbRet usb_write(const void *in, size_t size);
 // the usb client should handle all of this.
 UsbRet usb_poll(uint8_t mode, size_t size);
 
+//
+UsbRet usb_get_result(void);
+
+//
+bool usb_failed(UsbRet ret);
+
+//
+bool usb_succeeded(UsbRet ret);
+
 // call this to exit usb comms.
 void usb_exit(void);
+
+
+
+/*
+*   File Functions.
+*/
+
+//
+UsbRet usb_open_file(const char *name);
+
+//
+UsbRet usb_touch_file(const char *name);
+
+//
+UsbRet usb_rename_file(const char *curr_name, const char *new_name);
+
+//
+UsbRet usb_delete_file(const char *name);
+
+//
+UsbRet usb_read_file(void *out, size_t size, uint64_t offset);
+
+//
+UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset);
+
+//
+void usb_close_file(void);
 
 #endif
