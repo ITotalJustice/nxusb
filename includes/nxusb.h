@@ -13,6 +13,7 @@ typedef uint32_t UsbRet;    // return type
 typedef enum
 {
     UsbMode_Exit                    = 0x0,
+    UsbMode_Ping                    = 0x1,
 
     UsbMode_OpenFile                = 0x10,
     UsbMode_ReadFile                = 0x11,
