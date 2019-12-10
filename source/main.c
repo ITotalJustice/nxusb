@@ -7,19 +7,6 @@
 #include "nxusb.h"
 
 
-void app_init(void)
-{
-    consoleInit(NULL);
-    if (R_FAILED(usbCommsInitialize()))
-        fatalThrow(0xE001);
-}
-
-void app_exit(void)
-{
-    consoleExit(NULL);
-    usbCommsExit();
-}
-
 uint64_t poll_intput(void)
 {
     hidScanInput();
@@ -76,12 +63,23 @@ void check_error_code(UsbReturnCode err)
         print_message_loop_lock("Success!!!\n\n");
 }
 
+void app_init(void)
+{
+    consoleInit(NULL);
+    check_error_code(usb_init());
+}
+
+void app_exit(void)
+{
+    consoleExit(NULL);
+    usb_exit();
+}
+
 int main(int argc, char *argv[])
 {
     app_init();
 
-    check_error_code(usb_poll(UsbMode_Ping, 50000));
-
+    /*
     while (appletMainLoop())
     {
         uint64_t input = poll_intput();
@@ -90,6 +88,7 @@ int main(int argc, char *argv[])
         if (input & KEY_B || input & KEY_PLUS)
             break;
     }
+    */
 
     app_exit();
     return 0;

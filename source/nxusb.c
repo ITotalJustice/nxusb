@@ -14,6 +14,48 @@
 *   Core Functions.
 */
 
+typedef struct
+{
+    uint64_t magic;
+    uint8_t macro;
+    uint8_t minor;
+    uint8_t major;
+    uint8_t padding[0x5];
+} nxusb_header;
+nxusb_header g_host;  // will store the client info.
+nxusb_header g_client;  // will store the client info.
+
+
+UsbRet usb_init(void)
+{
+    if (R_FAILED(usbCommsInitialize()))
+        return UsbReturnCode_FailedToInitComms;
+    
+    g_host.magic = NXUSB_MAGIC;
+    g_host.major = NXUSB_VERSION_MAJOR;
+    g_host.minor = NXUSB_VERSION_MINOR;
+    g_host.macro = NXUSB_VERSION_MACRO;
+
+    UsbRet ret;
+
+    ret = usb_write(&g_host, 0x10);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_get_result();
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_read(&g_client, 0x10);
+    if (usb_failed(ret))
+        return ret;
+    
+    if (g_client.magic != NXUSB_MAGIC)
+        return UsbReturnCode_WrongClientMagic;
+
+    return UsbReturnCode_Success;
+}
+
 UsbRet usb_read(void *out, size_t size)
 {
     size_t ret = usbCommsRead(out, size);
@@ -51,6 +93,13 @@ UsbRet usb_get_result(void)
     return ret;
 }
 
+void usb_get_client_version(uint8_t *macro, uint8_t *minor, uint8_t *major)
+{
+    *macro = g_client.macro;
+    *minor = g_client.minor;
+    *major = g_client.major;
+}
+
 bool usb_failed(UsbRet ret)
 {
     if (ret == UsbReturnCode_Success)
@@ -68,6 +117,7 @@ bool usb_succeeded(UsbRet ret)
 void usb_exit(void)
 {
     usb_poll(UsbMode_Exit, 0);
+    usbCommsExit();
 }
 
 

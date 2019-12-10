@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#define NXUSB_MAGIC         0x4E58555342 // might have to reverse it.
+#define NXUSB_VERSION_MAJOR 0x0
+#define NXUSB_VERSION_MINOR 0x0
+#define NXUSB_VERSION_MACRO 0x1
 
 #define USB_POLL_SIZE       0x10
 #define USB_FILE_NAME_MAX   0x200
@@ -45,6 +49,11 @@ typedef enum
     UsbReturnCode_PollError             = 0x1,
     UsbReturnCode_WrongSizeRead         = 0x2,
     UsbReturnCode_WrongSizeWritten      = 0x3,
+    UsbReturnCode_FailedToInitComms     = 0x4,
+    UsbReturnCode_WrongHostMagic        = 0x5,
+    UsbReturnCode_WrongClientMagic      = 0x6,
+    UsbReturnCode_UnsupportedHosttVer   = 0x7,
+    UsbReturnCode_UnsupportedCleintVer  = 0x8,
 
     UsbReturnCode_FileNameTooLarge      = 0x10,
     UsbReturnCode_EmptyField            = 0x11,
@@ -136,6 +145,13 @@ typedef struct
 *   Core Functions.
 */
 
+// inits usb comms.
+// sends nxusb magic and version number.
+// checks the result of the pc client to see if magic matches and version is supported.
+// receives data from pc client conatining magic and client version.
+// todo: checks to see if client version in supported.
+UsbRet usb_init(void);
+
 // read into void *out return size of data read.
 // returns UsbReturnCode_Success if the size read is equal to the given size.
 UsbRet usb_read(void *out, size_t size);
@@ -150,6 +166,9 @@ UsbRet usb_write(const void *in, size_t size);
 // size can be set to zero for modes that don't require a size, such as exit and closing a file.
 // the usb client should handle all of this.
 UsbRet usb_poll(uint8_t mode, size_t size);
+
+// writes the version number of the client to the given inputs.
+void usb_get_client_version(uint8_t *macro, uint8_t *minor, uint8_t *major);
 
 // this function will be called by other usb functions without decent error handling.
 // an example would be on the function usb_open_file, poll and write could succeed, but the actual opening of the file in python might fail.
