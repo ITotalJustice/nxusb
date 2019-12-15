@@ -3,8 +3,10 @@
 */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <malloc.h>
 #include <switch.h>
 
 #include "nxusb.h"
@@ -58,7 +60,11 @@ UsbRet usb_init(void)
 
 UsbRet usb_read(void *out, size_t size)
 {
-    size_t ret = usbCommsRead(out, size);
+    void *buf = memalign(0x1000, size);
+    size_t ret = usbCommsRead(buf, size);
+    memcpy(out, buf, size);
+    free(buf);
+    
     if (ret != size)
         return UsbReturnCode_WrongSizeRead;
     return UsbReturnCode_Success;
@@ -66,7 +72,11 @@ UsbRet usb_read(void *out, size_t size)
 
 UsbRet usb_write(const void *in, size_t size)
 {
-    size_t ret = usbCommsWrite(in, size);
+    void *buf = memalign(0x1000, size);
+    memcpy(buf, in, size);
+    size_t ret = usbCommsWrite(buf, size);
+    free(buf);
+
     if (ret != size)
         return UsbReturnCode_WrongSizeWritten;
     return UsbReturnCode_Success;
@@ -305,27 +315,123 @@ void usb_close_file(void)
 
 UsbRet usb_open_dir(const char *path)
 {
+    if (path == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t size = strlen(path) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_OpenDir, size + 0x1);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(path, size + 0x1);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_get_result();
 }
 
 UsbRet usb_delete_dir(const char *path)
 {
+    if (path == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t size = strlen(path) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_DeleteDir, size + 0x1);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(path, size + 0x1);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_get_result();
 }
 
 UsbRet usb_delete_dir_recursively(const char *path)
 {
+    if (path == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t size = strlen(path) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_DeleteDirRecursively, size + 0x1);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(path, size + 0x1);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_get_result();
 }
 
-UsbRet usb_rename_dir(const char *path)
+UsbRet usb_rename_dir(const char *curr_name, const char *new_name)
 {
+    if (curr_name == NULL || new_name == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t str1_len = strlen(curr_name) + 1;
+    size_t str2_len = strlen(new_name) + 1;
+
+    if (str1_len >= USB_FILE_NAME_MAX || str2_len >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_RenameFile, str1_len + str2_len + 0x10);
+    if (usb_failed(ret))
+        return ret;
+
+    const struct
+    {
+        size_t l1;
+        size_t l2;
+        const char *str1;
+        const char *str2;
+    } send = { str1_len, str2_len, curr_name, new_name };
+
+    ret = usb_write(&send, str1_len + str2_len + 2 + 0x10);
+    if (usb_failed(ret))
+        return ret;
+    
+    return usb_get_result();
 }
 
 UsbRet usb_touch_dir(const char *path)
 {
+    if (path == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t size = strlen(path) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_TouchFile, size);
+
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(path, size);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_get_result();
 }
 
 UsbRet usb_get_dir_total_from_path(const char *path, uint64_t *out)
@@ -345,7 +451,7 @@ UsbRet usb_read_dir(usb_file_entry_t *out, size_t size)
 
 UsbRet usb_get_dir_size(size_t *out)
 {
-
+    
 }
 
 UsbRet usb_get_dir_size_recursively(size_t *out)
@@ -355,12 +461,46 @@ UsbRet usb_get_dir_size_recursively(size_t *out)
 
 UsbRet usb_get_dir_size_from_path(const char *path, size_t *out)
 {
+    if (path == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t size = strlen(path) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_GetDirSizeFromPath, size);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(path, size);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_read(out, sizeof(uint64_t));
 }
 
 UsbRet usb_get_dir_size_recursively_from_path(const char *path, size_t *out)
 {
+    if (path == NULL)
+        return UsbReturnCode_EmptyField;
 
+    size_t size = strlen(path) + 1;
+    if (size >= USB_FILE_NAME_MAX)
+        return UsbReturnCode_FileNameTooLarge;
+
+    UsbRet ret;
+
+    ret = usb_poll(UsbMode_GetDirSizeFromPathRecursively, size);
+    if (usb_failed(ret))
+        return ret;
+
+    ret = usb_write(path, size);
+    if (usb_failed(ret))
+        return ret;
+
+    return usb_read(out, sizeof(uint64_t));
 }
 
 
