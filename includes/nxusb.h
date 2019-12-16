@@ -31,7 +31,6 @@ typedef enum
     UsbMode_OpenDir                         = 0x30,
     UsbMode_ReadDir                         = 0x31,
     UsbMode_DeleteDir                       = 0x32,
-    UsbMode_DeleteDirRecursively            = 0x33,
     UsbMode_GetDirTotal                     = 0x34,
     UsbMode_GetDirTotalRecursively          = 0x35,
     UsbMode_RenameDir                       = 0x36,

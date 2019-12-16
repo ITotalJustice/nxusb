@@ -357,28 +357,6 @@ UsbRet usb_delete_dir(const char *path)
     return usb_get_result();
 }
 
-UsbRet usb_delete_dir_recursively(const char *path)
-{
-    if (path == NULL)
-        return UsbReturnCode_EmptyField;
-
-    size_t size = strlen(path) + 1;
-    if (size >= USB_FILE_NAME_MAX)
-        return UsbReturnCode_FileNameTooLarge;
-
-    UsbRet ret;
-
-    ret = usb_poll(UsbMode_DeleteDirRecursively, size + 0x1);
-    if (usb_failed(ret))
-        return ret;
-
-    ret = usb_write(path, size + 0x1);
-    if (usb_failed(ret))
-        return ret;
-
-    return usb_get_result();
-}
-
 UsbRet usb_rename_dir(const char *curr_name, const char *new_name)
 {
     if (curr_name == NULL || new_name == NULL)
