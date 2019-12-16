@@ -229,4 +229,37 @@ void usb_close_file(void);
 *   Dir Functions.
 */
 
+//
+UsbRet usb_open_dir(const char *path);
+
+//
+UsbRet usb_delete_dir(const char *path);
+
+//
+UsbRet usb_rename_dir(const char *curr_name, const char *new_name);
+
+//
+UsbRet usb_touch_dir(const char *path);
+
+//
+UsbRet usb_get_dir_total_from_path(const char *path, uint64_t *out);
+
+//
+UsbRet usb_get_dir_total(uint64_t *out);
+
+//
+UsbRet usb_read_dir(usb_file_entry_t *out, size_t size);
+
+//
+UsbRet usb_get_dir_size(size_t *out);
+
+//
+UsbRet usb_get_dir_size_recursively(size_t *out);
+
+//
+UsbRet usb_get_dir_size_from_path(const char *path, size_t *out);
+
+//
+UsbRet usb_get_dir_size_recursively_from_path(const char *path, size_t *out);
+
 #endif

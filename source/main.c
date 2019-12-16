@@ -10,13 +10,9 @@
 typedef enum
 {
     func_usb_int,
-    func_usb_read,
-    func_usb_write,
-    func_usb_poll,
-    func_usb_get_result,
-    func_usb_get_client_version,
     func_usb_exit,
-    func_usb_open_file,
+    func_usb_open_file_read,
+    func_usb_open_file_write,
     func_usb_touch_file,
     func_usb_rename_file,
     func_usb_delete_file,
@@ -35,11 +31,6 @@ typedef enum
 const char *func_str[] =
 {
     "usb_int",
-    "usb_read",
-    "usb_write",
-    "usb_poll",
-    "usb_get_result",
-    "usb_get_client_version",
     "usb_exit",
     "usb_open_file",
     "usb_touch_file",
@@ -126,20 +117,13 @@ void app_exit(void)
     consoleExit(NULL);
 }
 
-void keyboard(char *buffer, const char *clipboard, ...)
+void keyboard(char *buffer)
 {
-    char new_message[FS_MAX_PATH];
-    va_list arg;
-    va_start(arg, clipboard);
-    vsprintf(new_message, clipboard, arg);
-    va_end(arg);
-
     SwkbdConfig config;
     swkbdConfigMakePresetDefault(&config);
-    swkbdConfigSetHeaderText(&config, new_message);
     swkbdConfigSetStringLenMax(&config, 0x100);
     swkbdCreate(&config, 0);
-    swkbdShow(&config, buffer, 256);
+    swkbdShow(&config, buffer, 0x100);
     swkbdClose(&config);
 }
 
@@ -181,7 +165,7 @@ int main(int argc, char *argv[])
     app_init();
 
     uint8_t cursor      = 0;
-    uint8_t cursor_max  = 21;
+    uint8_t cursor_max  = 16;
     print_debug_menu(cursor, cursor_max);
 
     while (appletMainLoop())
@@ -202,7 +186,12 @@ int main(int argc, char *argv[])
 
         if (input & KEY_A)
         {
-            char buf1[0x100], buf2[0x100];
+            char text[0x100] = {0};
+            char text2[0x100] = {0};
+
+            uint8_t buf[0x800000];  // 8MiB.
+            uint8_t mode = 0;
+            size_t size = 0;
 
             switch (cursor)
             {
@@ -211,85 +200,99 @@ int main(int argc, char *argv[])
                     check_error_code(usb_init());
                     break;
                 }
-                case func_usb_read:
-                {
-                    break;
-                }
-                case func_usb_write:
-                {
-                    break;
-                }
-                case func_usb_poll:
-                {
-                    break;
-                }
-                case func_usb_get_result:
-                {
-                    break;
-                }
-                case func_usb_get_client_version:
-                {
-                    break;
-                }
                 case func_usb_exit:
                 {
                     usb_exit();
                     break;
                 }
-                case func_usb_open_file:
+                case func_usb_open_file_read:
                 {
+                    keyboard(text);
+                    check_error_code(usb_open_file(text, UsbFileOpenMode_Read));
+                    break;
+                }
+                case func_usb_open_file_write:
+                {
+                    keyboard(text);
+                    check_error_code(usb_open_file(text, UsbFileOpenMode_Write));
                     break;
                 }
                 case func_usb_touch_file:
                 {
+                    keyboard(text);
+                    check_error_code(usb_touch_file(text));
                     break;
                 }
                 case func_usb_rename_file:
                 {
+                    keyboard(text);
+                    keyboard(text2);
+                    check_error_code(usb_rename_file(text, text2));
                     break;
                 }
                 case func_usb_delete_file:
                 {
+                    keyboard(text);
+                    usb_delete_file(text);
                     break;
                 }
                 case func_usb_read_file:
                 {
+                    check_error_code(usb_read_file(buf, 0x20, 0));
                     break;
                 }
                 case func_usb_write_to_file:
                 {
+                    *buf = 99;
+                    check_error_code(usb_write_to_file(buf, 0x20, 0));
                     break;
                 }
                 case func_usb_get_file_size:
                 {
+                    keyboard(text);
+                    check_error_code(usb_get_file_size(text, &size));
                     break;
                 }
                 case func_usb_close_file:
                 {
+                    usb_close_file();
                     break;
                 }
                 case func_usb_open_dir:
                 {
+                    keyboard(text);
+                    check_error_code(usb_open_dir(text));
                     break;
                 }
                 case func_usb_delete_dir:
                 {
+                    keyboard(text);
+                    check_error_code(usb_delete_dir(text));
                     break;
                 }
                 case func_usb_rename_dir:
                 {
+                    keyboard(text);
+                    keyboard(text2);
+                    check_error_code(usb_rename_dir(text, text2));
                     break;
                 }
                 case func_usb_touch_dir:
                 {
+                    keyboard(text);
+                    check_error_code(usb_touch_dir(text));
                     break;
                 }
                 case func_usb_get_dir_size_from_path:
                 {
+                    keyboard(text);
+                    check_error_code(usb_get_dir_size_from_path(text, &size));
                     break;
                 }
                 case func_usb_get_dir_size_recursively_from_path:
                 {
+                    keyboard(text);
+                    check_error_code(usb_get_dir_size_recursively_from_path(text, &size));
                     break;
                 }
             }
