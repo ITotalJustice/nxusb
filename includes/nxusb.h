@@ -63,6 +63,10 @@ typedef enum
     UsbReturnCode_FailedOpenFile        = 0x20,
     UsbReturnCode_FailedRenameFile      = 0x21,
     UsbReturnCode_FailedDeleteFile      = 0x22,
+    UsbReturnCode_FailedTouchFile       = 0x23,
+    UsbReturnCode_FailedToGetFileSize   = 0x24,
+    UsbReturnCode_FileNotOpen           = 0x25, // unsure how best to use this.
+    
 
     UsbReturnCode_FailedOpenDir         = 0x30,
     UsbReturnCode_FailedRenameDir       = 0x31,
