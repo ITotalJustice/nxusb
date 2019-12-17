@@ -141,17 +141,17 @@ UsbRet usb_open_file(const char *name, uint8_t mode)
     if (name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(name) + 1;
+    size_t size = strlen(name);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
     UsbRet ret;
 
-    ret = usb_poll(UsbMode_OpenFile, size + 0x1);
+    ret = usb_poll(UsbMode_OpenFile, size);
     if (usb_failed(ret))
         return ret;
 
-    ret = usb_write(name, size + 0x1);
+    ret = usb_write(name, size);
     if (usb_failed(ret))
         return ret;
 
@@ -163,7 +163,7 @@ UsbRet usb_touch_file(const char *name)
     if (name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(name) + 1;
+    size_t size = strlen(name);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
@@ -186,8 +186,8 @@ UsbRet usb_rename_file(const char *curr_name, const char *new_name)
     if (curr_name == NULL || new_name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t str1_len = strlen(curr_name) + 1;
-    size_t str2_len = strlen(new_name) + 1;
+    size_t str1_len = strlen(curr_name);
+    size_t str2_len = strlen(new_name);
 
     if (str1_len >= USB_FILE_NAME_MAX || str2_len >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
@@ -206,7 +206,7 @@ UsbRet usb_rename_file(const char *curr_name, const char *new_name)
         const char *str2;
     } send = { str1_len, str2_len, curr_name, new_name };
 
-    ret = usb_write(&send, str1_len + str2_len + 2 + 0x10);
+    ret = usb_write(&send, str1_len + str2_len + 0x10);
     if (usb_failed(ret))
         return ret;
     
@@ -285,7 +285,7 @@ UsbRet usb_get_file_size(const char *name, uint64_t *out)
     if (name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(name) + 1;
+    size_t size = strlen(name);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
@@ -318,17 +318,17 @@ UsbRet usb_open_dir(const char *path)
     if (path == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(path) + 1;
+    size_t size = strlen(path);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
     UsbRet ret;
 
-    ret = usb_poll(UsbMode_OpenDir, size + 0x1);
+    ret = usb_poll(UsbMode_OpenDir, size);
     if (usb_failed(ret))
         return ret;
 
-    ret = usb_write(path, size + 0x1);
+    ret = usb_write(path, size);
     if (usb_failed(ret))
         return ret;
 
@@ -340,17 +340,17 @@ UsbRet usb_delete_dir(const char *path)
     if (path == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(path) + 1;
+    size_t size = strlen(path);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
     UsbRet ret;
 
-    ret = usb_poll(UsbMode_DeleteDir, size + 0x1);
+    ret = usb_poll(UsbMode_DeleteDir, size);
     if (usb_failed(ret))
         return ret;
 
-    ret = usb_write(path, size + 0x1);
+    ret = usb_write(path, size);
     if (usb_failed(ret))
         return ret;
 
@@ -362,8 +362,8 @@ UsbRet usb_rename_dir(const char *curr_name, const char *new_name)
     if (curr_name == NULL || new_name == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t str1_len = strlen(curr_name) + 1;
-    size_t str2_len = strlen(new_name) + 1;
+    size_t str1_len = strlen(curr_name);
+    size_t str2_len = strlen(new_name);
 
     if (str1_len >= USB_FILE_NAME_MAX || str2_len >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
@@ -382,7 +382,7 @@ UsbRet usb_rename_dir(const char *curr_name, const char *new_name)
         const char *str2;
     } send = { str1_len, str2_len, curr_name, new_name };
 
-    ret = usb_write(&send, str1_len + str2_len + 2 + 0x10);
+    ret = usb_write(&send, str1_len + str2_len + 0x10);
     if (usb_failed(ret))
         return ret;
     
@@ -394,7 +394,7 @@ UsbRet usb_touch_dir(const char *path)
     if (path == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(path) + 1;
+    size_t size = strlen(path);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
@@ -442,7 +442,7 @@ UsbRet usb_get_dir_size_from_path(const char *path, size_t *out)
     if (path == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(path) + 1;
+    size_t size = strlen(path);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
@@ -464,7 +464,7 @@ UsbRet usb_get_dir_size_recursively_from_path(const char *path, size_t *out)
     if (path == NULL)
         return UsbReturnCode_EmptyField;
 
-    size_t size = strlen(path) + 1;
+    size_t size = strlen(path);
     if (size >= USB_FILE_NAME_MAX)
         return UsbReturnCode_FileNameTooLarge;
 
