@@ -299,7 +299,11 @@ UsbRet usb_get_file_size(const char *name, uint64_t *out)
     if (usb_failed(ret))
         return ret;
 
-    return usb_read(out, sizeof(uint64_t));
+    ret = usb_read(out, sizeof(uint64_t));
+    if (usb_failed(ret))
+        return ret;
+
+    return out > 0 ? ret : UsbReturnCode_FailedToGetFileSize;
 }
 
 void usb_close_file(void)
