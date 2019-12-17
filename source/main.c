@@ -189,8 +189,7 @@ int main(int argc, char *argv[])
             char text[0x100] = {0};
             char text2[0x100] = {0};
 
-            uint8_t buf[0x800000];  // 8MiB.
-            uint8_t mode = 0;
+            uint8_t buf[0x100] = {0};  // 8MiB.
             size_t size = 0;
 
             switch (cursor)
