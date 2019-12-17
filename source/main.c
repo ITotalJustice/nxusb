@@ -17,7 +17,7 @@ typedef enum
     func_usb_rename_file,
     func_usb_delete_file,
     func_usb_read_file,
-    func_usb_write_to_file,
+    func_usb_write_file,
     func_usb_get_file_size,
     func_usb_close_file,
     func_usb_open_dir,
@@ -32,7 +32,8 @@ const char *func_str[] =
 {
     "usb_int",
     "usb_exit",
-    "usb_open_file",
+    "usb_open_file_read",
+    "usb_open_file_write",
     "usb_touch_file",
     "usb_rename_file",
     "usb_delete_file",
@@ -240,7 +241,7 @@ int main(int argc, char *argv[])
                     check_error_code(usb_read_file(buf, 0x20, 0));
                     break;
                 }
-                case func_usb_write_to_file:
+                case func_usb_write_file:
                 {
                     *buf = 99;
                     check_error_code(usb_write_to_file(buf, 0x20, 0));
