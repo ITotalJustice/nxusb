@@ -14,23 +14,33 @@
 typedef uint32_t UsbRet;    // return type
 
 
+
 typedef enum
 {
     UsbMode_Exit                            = 0x0,
     UsbMode_Ping                            = 0x1,
 
     UsbMode_OpenFile                        = 0x10,
-    UsbMode_ReadFile                        = 0x11,
-    UsbMode_WriteFile                       = 0x12,
-    UsbMode_TouchFile                       = 0x13,
-    UsbMode_DeleteFile                      = 0x14,
-    UsbMode_RenameFile                      = 0x15,
-    UsbMode_GetFileSize                     = 0x16,
-    UsbMode_CloseFile                       = 0x20,
+    UsbMode_OpenFileReadBytes               = 0x11,
+    UsbMode_OpenFileWrite                   = 0x12,
+    UsbMode_OpenFileWriteBytes              = 0x13,
+    UsbMode_OpenFileAppend                  = 0x14,
+    UsbMode_OpenFileAppendBytes             = 0x15,
+
+    UsbMode_ReadFile                        = 0x20,
+    UsbMode_WriteFile                       = 0x21,
+    UsbMode_TouchFile                       = 0x22,
+    UsbMode_DeleteFile                      = 0x23,
+    UsbMode_RenameFile                      = 0x24,
+    UsbMode_GetFileSize                     = 0x25,
+    UsbMode_GetFileSizeFromPath             = 0x26,
+    UsbMode_IsFile                          = 0x27,
+    UsbMode_CloseFile                       = 0x28,
 
     UsbMode_OpenDir                         = 0x30,
     UsbMode_ReadDir                         = 0x31,
-    UsbMode_DeleteDir                       = 0x32,
+    UsbMode_TouchDir                        = 0x32,
+    UsbMode_DeleteDir                       = 0x33,
     UsbMode_GetDirTotal                     = 0x34,
     UsbMode_GetDirTotalRecursively          = 0x35,
     UsbMode_RenameDir                       = 0x36,
@@ -38,6 +48,9 @@ typedef enum
     UsbMode_GetDirSizeRecursively           = 0x37,
     UsbMode_GetDirSizeFromPath              = 0x37,
     UsbMode_GetDirSizeFromPathRecursively   = 0x37,
+    UsbMode_GetDirTotalFromPath             = 0x38,
+    UsbMode_GetDirTotalRecursivelyFromPath  = 0x39,
+    UsbMode_IsDir                           = 0x3A,
 
     UsbMode_OpenDevice                      = 0x40,
     UsbMode_ReadDevices                     = 0x41,
@@ -64,13 +77,24 @@ typedef enum
     UsbReturnCode_FailedRenameFile      = 0x21,
     UsbReturnCode_FailedDeleteFile      = 0x22,
     UsbReturnCode_FailedTouchFile       = 0x23,
-    UsbReturnCode_FailedToGetFileSize   = 0x24,
-    UsbReturnCode_FileNotOpen           = 0x25, // unsure how best to use this.
+    UsbReturnCode_FailedGetFileSize     = 0x24,
+    UsbReturnCode_FileNotOpen           = 0x25,
+    UsbReturnCode_FailedReadFile        = 0x26,
     
 
     UsbReturnCode_FailedOpenDir         = 0x30,
     UsbReturnCode_FailedRenameDir       = 0x31,
-    UsbReturnCode_FailedDeleteDir       = 0x32,
+    UsbReturnCode_FailedTouchDir        = 0x32,
+    UsbReturnCode_FailedGetDirTotal     = 0x33,
+    UsbReturnCode_FailedGetDirTotalFromPath = 0x34,
+    UsbReturnCode_FailedReadDir         = 0x35,
+    UsbReturnCode_FailedReadDirFromPath = 0x36,
+    UsbReturnCode_FailedGetDirSize      = 0x37,
+    UsbReturnCode_FailedGetDirSizeRecursively   = 0x38,
+    UsbReturnCode_FailedGetDirSizeFromPath      = 0x39,
+    UsbReturnCode_FailedGetDirSizeRecursivelyFromPath   = 0x3A,
+
+    UsbReturnCode_Failure       = 0xFF,
 } UsbReturnCode;
 
 typedef enum
@@ -124,17 +148,6 @@ typedef enum
     UsbFileSizeType_Small,
     UsbFileSizeType_Large   // too large for fat32.
 } UsbFileSizeType;
-
-typedef enum
-{
-    UsbFileOpenMode_Read,
-    UsbFileOpenMode_ReadBytes,
-    UsbFileOpenMode_Write,
-    UsbFileOpenMode_WriteBytes,
-    UsbFileOpenMode_Append,
-    UsbFileOpenMode_AppendBytes
-} UsbFileOpenMode; // these will probably be changed because i am not sure on the openfile modes in python.
-
 typedef struct
 {
     char name[USB_FILE_NAME_MAX];   // 1kb.
@@ -199,7 +212,7 @@ void usb_exit(void);
 */
 
 // sends the name of the file to open, and the mode (read, write).
-// 
+// the mode should be the open file mode you want, i.e. read, write, append.
 UsbRet usb_open_file(const char *name, uint8_t mode);
 
 // create a file from the given name.
@@ -207,21 +220,24 @@ UsbRet usb_open_file(const char *name, uint8_t mode);
 // should return UsbReturnCode_Success if the file was created OR is the file already exists.
 UsbRet usb_touch_file(const char *name);
 
-// 
+// rename a file.
 UsbRet usb_rename_file(const char *curr_name, const char *new_name);
 
 // deletes a file using the given name.
 // should return UsbReturnCode_Success if the file was delete OR if the file didn't already exist.
 UsbRet usb_delete_file(const char *name);
 
-//
+// read into out until size.
 UsbRet usb_read_file(void *out, size_t size, uint64_t offset);
 
-//
+// write to in to usb until size.
 UsbRet usb_write_to_file(const void *in, size_t size, uint64_t offset);
 
-// get the file 
-UsbRet usb_get_file_size(const char *name, uint64_t *out);
+// get the size of an open file.
+UsbRet usb_get_file_size(uint64_t *out);
+
+// get the size of a file from path.
+UsbRet usb_get_file_size_from_path(const char *name, uint64_t *out);
 
 // close the current open file in the python client.
 // this should be used as a signal to the end reading writing loop.
@@ -233,37 +249,36 @@ void usb_close_file(void);
 *   Dir Functions.
 */
 
-//
+// open a dir.
 UsbRet usb_open_dir(const char *path);
 
-//
+// check if entry is a dir.
+// returns 0 if true.
+UsbRet usb_is_dir(const char *path);
+
+// delete a dir using the given path.
 UsbRet usb_delete_dir(const char *path);
 
-//
+// rename a dir.
+// can also act as moving a dir.
 UsbRet usb_rename_dir(const char *curr_name, const char *new_name);
 
-//
+// create a dir.
 UsbRet usb_touch_dir(const char *path);
 
-//
+// get the total number of entries from a dir.
+UsbRet usb_get_dir_total(uint64_t *out);
 UsbRet usb_get_dir_total_from_path(const char *path, uint64_t *out);
 
-//
-UsbRet usb_get_dir_total(uint64_t *out);
+// reads dir into out * count.
+// this should be called after getting dir total. 
+UsbRet usb_read_dir(usb_file_entry_t *out, uint64_t count);
+UsbRet usb_read_dir_from_path(usb_file_entry_t *out, uint64_t count, const char *path);
 
-//
-UsbRet usb_read_dir(usb_file_entry_t *out, size_t size);
-
-//
+// get the entire size of of a dir.
 UsbRet usb_get_dir_size(size_t *out);
-
-//
 UsbRet usb_get_dir_size_recursively(size_t *out);
-
-//
 UsbRet usb_get_dir_size_from_path(const char *path, size_t *out);
-
-//
 UsbRet usb_get_dir_size_recursively_from_path(const char *path, size_t *out);
 
 #endif
