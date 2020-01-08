@@ -19,6 +19,7 @@ typedef enum
     func_usb_read_file,
     func_usb_write_file,
     func_usb_get_file_size,
+    func_usb_get_file_size_from_path,
     func_usb_close_file,
     func_usb_open_dir,
     func_usb_delete_dir,
@@ -40,6 +41,7 @@ const char *func_str[] =
     "usb_read_file",
     "usb_write_to_file",
     "usb_get_file_size",
+    "usb_get_file_size_from_path",
     "usb_close_file",
     "usb_open_dir",
     "usb_delete_dir",
@@ -83,29 +85,26 @@ void print_message_clear_display(const char *message, ...)
 
 void print_message_loop_lock(const char* message, ...)
 {
-    char new_message[FS_MAX_PATH];
-    va_list arg;
-    va_start(arg, message);
-    vsprintf(new_message, message, arg);
-    va_end(arg);
-
-    printf("%s", new_message);
+    va_list v;
+    va_start(v, message);
+    vfprintf(stdout, message, v);
     consoleUpdate(NULL);
+
     while (appletMainLoop())
     {
         if (poll_intput() & KEY_B)
+        {
             break;
+        }
     }
+
+    va_end(v);
 }
 
 void check_error_code(UsbReturnCode err)
 {
     consoleClear();
-
-    if (usb_failed(err))
-        print_message_loop_lock("you got the error code %u\n\n", err);
-    else
-        print_message_loop_lock("Success!!!\n\n");
+    usb_failed(err) ? print_message_loop_lock("you got the error code %u\n\n", err) : print_message_loop_lock("Success!!!\n\n");
 }
 
 void app_init(void)
@@ -133,32 +132,19 @@ void print_debug_menu(uint8_t cursor, uint8_t max)
     consoleClear();
 
     for (uint8_t i = 0; i < max; i++)
-    {
-        if (cursor == i)
-            printf("> %s\n\n", func_str[i]);
-        else
-            printf("  %s\n\n", func_str[i]);
-    }
+        printf("%s %s\n\n", cursor == i ? ">" : " ", func_str[i]);
 
     consoleUpdate(NULL);
 }
 
 uint32_t move_cursor_up(uint32_t cursor, uint32_t cursor_max)
 {
-    if (cursor == 0)
-        cursor = cursor_max - 1;
-    else
-        cursor--;
-    return cursor;
+    return cursor == 0 ? cursor_max - 1 : cursor--;
 }
 
 uint32_t move_cursor_down(uint32_t cursor, uint32_t cursor_max)
 {
-    if (cursor == cursor_max - 1)
-        cursor = 0;
-    else
-        cursor++;
-    return cursor;
+    return cursor == cursor_max - 1 ? 0 : cursor++;
 }
 
 int main(int argc, char *argv[])
@@ -166,7 +152,7 @@ int main(int argc, char *argv[])
     app_init();
 
     uint8_t cursor      = 0;
-    uint8_t cursor_max  = 16;
+    uint8_t cursor_max  = 17;
     print_debug_menu(cursor, cursor_max);
 
     while (appletMainLoop())
@@ -208,13 +194,13 @@ int main(int argc, char *argv[])
                 case func_usb_open_file_read:
                 {
                     keyboard(text);
-                    check_error_code(usb_open_file(text, UsbFileOpenMode_Read));
+                    check_error_code(usb_open_file(text, UsbMode_OpenFileReadBytes));
                     break;
                 }
                 case func_usb_open_file_write:
                 {
                     keyboard(text);
-                    check_error_code(usb_open_file(text, UsbFileOpenMode_Write));
+                    check_error_code(usb_open_file(text, UsbMode_OpenFileWriteBytes));
                     break;
                 }
                 case func_usb_touch_file:
@@ -249,8 +235,13 @@ int main(int argc, char *argv[])
                 }
                 case func_usb_get_file_size:
                 {
+                    check_error_code(usb_get_file_size(&size));
+                    break;
+                }
+                case func_usb_get_file_size_from_path:
+                {
                     keyboard(text);
-                    check_error_code(usb_get_file_size(text, &size));
+                    check_error_code(usb_get_file_size_from_path(text, &size));
                     break;
                 }
                 case func_usb_close_file:

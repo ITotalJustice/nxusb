@@ -293,7 +293,7 @@ UsbRet __usb_get_file_size(uint8_t mode, uint64_t *out)
     if (usb_failed(ret))
         return ret;
 
-    return out > 0 ? ret : UsbReturnCode_FailedToGetFileSize;
+    return out > 0 ? ret : UsbReturnCode_FailedGetFileSize;
 }
 
 UsbRet __usb_get_file_size_from_path(uint8_t mode, const char *name, uint64_t *out)
@@ -319,7 +319,7 @@ UsbRet __usb_get_file_size_from_path(uint8_t mode, const char *name, uint64_t *o
     if (usb_failed(ret))
         return ret;
 
-    return out > 0 ? ret : UsbReturnCode_FailedToGetFileSize;
+    return out > 0 ? ret : UsbReturnCode_FailedGetFileSize;
 }
 
 UsbRet __usb_get_total(uint8_t mode, uint64_t *out)
@@ -467,9 +467,9 @@ UsbRet usb_read_dir(usb_file_entry_t *out, uint64_t count)
 
     UsbRet ret;
 
-    ret = usb_poll(UsbMode_GetDirTotalFromPath, sizeof(usb_file_entry_t * count));
+    ret = usb_poll(UsbMode_GetDirTotalFromPath, count * sizeof(usb_file_entry_t));
 
-    ret = usb_read(out, sizeof(usb_file_entry_t * count));
+    ret = usb_read(out, count * sizeof(usb_file_entry_t));
     if (usb_failed(ret))
         return ret;
 
@@ -496,11 +496,12 @@ UsbRet usb_read_dir_from_path(usb_file_entry_t *out, uint64_t count, const char 
     if (usb_failed(ret))
         return ret;
 
-    ret = usb_write(sizeof(usb_file_entry_t * count), sizeof(uint64_t));
+    uint64_t in = count;    // going to re write this to be less...shit.
+    ret = usb_write(&in, sizeof(uint64_t));
     if (usb_failed(ret))
         return ret;
 
-    ret = usb_read(out, sizeof(usb_file_entry_t * count));
+    ret = usb_read(out, count * sizeof(usb_file_entry_t));
     if (usb_failed(ret))
         return ret;
 
